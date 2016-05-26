@@ -1,0 +1,17 @@
+*** Settings ***
+Library           DatabaseLibrary
+Library           RequestsLibrary
+Library           Collections
+Library           XML
+Library           YamlLibrary
+Library           CustomLibrary
+Resource          automation常用变量.txt
+Library           String
+
+*** Keywords ***
+连接数据库返回查询结果(mysql)
+    [Arguments]    ${sql}    ${host}    ${username}    ${passwd}    ${dbname}    ${dbport}=3306
+    ...    ${charset}=utf8
+    Connect To Database Using Custom Params    MySQLdb    db="${dbname}", user="${username}", passwd="${passwd}", host="${host}",charset="${charset}"
+    ${data}    Query    ${sql}
+    [Return]    ${data}

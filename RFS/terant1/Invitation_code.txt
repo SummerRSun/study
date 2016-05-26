@@ -1,0 +1,39 @@
+*** Settings ***
+Library           CustomLibrary
+Resource          keyword.txt
+Library           RequestsLibrary
+Library           Collections
+Library           YamlLibrary
+
+*** Test Cases ***
+校验邀请码是否存在或已被使用
+    [Setup]
+    ${data}    set variable    {"invitecode":"TM1WDRWC4WUK1KTQ"}
+    ${reponse}    run interface test    ${url}api/v1/inviCodeManage/checkCode    post    data=${data}    headers=${headers}
+    should be equal as strings    ${reponse.status_code}    200
+    ${content}    to json    ${reponse.content}
+
+校验邀请码是否已被使用
+    ${data}    set variable    {"invitecode":"TM1WDRWC4WUK1KTQ"}
+    ${reponse}    run interface test    ${url}api/v1/inviCodeManage/checkCode    post    data=${data}    headers=${headers}
+    should be equal as strings    ${reponse.status_code}    200
+    ${content}    to json    ${reponse.content}
+
+根据个数生成邀请码
+    [Documentation]    根据个数生成邀请码
+    ...    http://10.1.51.221:7600/tenant/api/v1/inviCodeManage/getInvitationCode?num=1&adduserid=f3b3a3eebd024fea9f8e5a8903dffdc7
+    ...
+    ...
+    ...    {
+    ...    "errCode": null,
+    ...    "message": null,
+    ...    "data": [
+    ...    "J8GJHM8M9GQQK1XT"
+    ...    ]
+    ...    }
+    ${data}    set variable    {"num":1,"adduserid":"f3b3a3eebd024fea9f8e5a8903dffdc7"}
+    ${reponse}    run interface test    ${url}api/v1/inviCodeManage/getInvitationCode    get    data=${data}    headers=${headers}
+    should be equal as strings    ${reponse.status_code}    200
+    ${content}    to json    ${reponse.content}
+    ${msg}    get tree    ${content}    message
+    should be equal as strings    ${msg}    None

@@ -1,0 +1,84 @@
+*** Settings ***
+Library           CustomLibrary
+Resource          keyword.txt
+Library           RequestsLibrary
+Library           YamlLibrary
+Library           Collections
+
+*** Test Cases ***
+产品-注册(未开发)
+    log    未开发
+
+产品-产品激活(未开发)
+    log    未开发
+
+产品-设置产品管理员(未开发)
+    log    未开发
+
+产品-查询系统注册的产品
+    [Documentation]    2.4.4 查询系统注册的产品
+    ...    2.4.4.1 接口URL
+    ...    https://$host:$port/tenant/api/v1/product/listAll
+    ...    2.4.4.2 请求方式
+    ...    GET
+    ...    2.4.4.3 请求参数
+    ...    无
+    ...    2.4.4.4 返回结果
+    ...    {
+    ...    "errCode": null,
+    ...    "message": null,
+    ...    "data": [
+    ...    {
+    ...    "productId": "0cfcd81048c748d8a3f877eb62dcc82f",
+    ...    "productNum": "1005",
+    ...    "productName": "Automation",
+    ...    "description": null,
+    ...    "productUrl": "http://10.1.50.225",
+    ...    "addTime": 1463540543000,
+    ...    "role": null
+    ...    },
+    ...    {
+    ...    "productId": "2555ae9414f748528800501df6581d63",
+    ...    "productNum": "1001",
+    ...    "productName": "Monitor",
+    ...    "description": "this is test \ Product",
+    ...    "productUrl": "http://monitor.uyun.cn",
+    ...    "addTime": 1463024829000,
+    ...    "role": null
+    ...    },
+    ...    {
+    ...    "productId": "c1041fb28fd741b1972a966c332c3898",
+    ...    "productNum": "1002",
+    ...    "productName": "WEB",
+    ...    "description": null,
+    ...    "productUrl": "http://browser.uyuntest.cn/octopus/web",
+    ...    "addTime": 1463541079000,
+    ...    "role": null
+    ...    },
+    ...    {
+    ...    "productId": "cf90446253454807a76a567e2fd89577",
+    ...    "productNum": "10000",
+    ...    "productName": "bat",
+    ...    "description": "monitor",
+    ...    "productUrl": "http://10.1.10.163",
+    ...    "addTime": 1463218687000,
+    ...    "role": null
+    ...    },
+    ...    {
+    ...    "productId": "d08eec10d14a42c7b0fd965023d01351",
+    ...    "productNum": "1003",
+    ...    "productName": "Mobile",
+    ...    "description": null,
+    ...    "productUrl": "http://www.uyun.cn/overview/mobile/index.html",
+    ...    "addTime": 1463438953000,
+    ...    "role": null
+    ...    }
+    ...    ]
+    ...    }
+    ${reponse}    run interface test tenant    ${用户名和密码}    ${url}api/v1/product/listAll    get    headers=${headers}
+    should be equal as strings    ${reponse.status_code}    200
+    ${content}    to json    ${reponse.content}
+    ${msg}    get tree    ${content}    message
+
+产品-查询租户开通的产品(未开发)
+    log    未开发

@@ -1,0 +1,10 @@
+*** Variables ***
+${url}            http://10.1.51.221:7600/tenant/
+${headers}        {'Content-Type': 'application/json','Accept':'application/json'}
+${email}          libin@uyunsoft.cn
+${passwd}         c8352b591f0896dde5230deec5e48693
+${用户名和密码}         {"email":"libin@uyunsoft.cn","passwd":"4816073"}
+${登录态headers}     {'Content-Type': 'application/json;charset=UTF-8','Accept':'application/json','Cookie':'token=3PPHKPPDNFZiqvziOpS0lrLSPlK2i1xNbZq2bGLEWoUFEkz9FKz6Uafc5DWR4uJBWTB0LiS1xGa9MRlL9uNsIS58+hn5gfEw4Tg/8KKQRiA=;userId=f74991c9a510424dbc012097c49c5c2e;tenantId=f74991c9a510424dbc012097c49c5c2e'}
+${用户id}           f74991c9a510424dbc012097c49c5c2e
+
+*** Keywords ***

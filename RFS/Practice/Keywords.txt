@@ -1,0 +1,28 @@
+*** Settings ***
+Library           DatabaseLibrary
+
+*** Keywords ***
+add
+    [Arguments]    ${a}    ${b}
+    log    ${a}
+    log    ${b}
+    ${sum}    Evaluate    ${a}+${b}
+    [Return]    ${sum}
+
+ScoreGrade
+    [Arguments]    ${score}
+    [Documentation]    输入分数，输出等级（60一下不及格，60-85良好。85以上优秀）
+    log    输入分数为: ${score}
+    Run Keyword If    ${score}<60    log    等级为：不及格
+    ...    ELSE IF    ${score}<=85    log    等级为：良好
+    ...    ELSE    log    等级为：优秀
+
+连接mysql
+    [Arguments]    ${sql}    ${host}    ${username}    ${passwd}    ${dbname}    ${dbport}=3306
+    ...    ${charset}=utf8
+    Connect To Database Using Custom Params    MySQLdb    db="${dbname}", user="${username}", passwd="${passwd}", host="${host}",charset="${charset}"
+    ${data}    Query    ${sql}
+    [Return]    ${data}
+
+关闭database
+    Disconnect From Database

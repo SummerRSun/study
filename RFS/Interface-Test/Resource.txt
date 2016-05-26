@@ -1,0 +1,99 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           DatabaseLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://10.1.50.225:7000/boltdog
+&{Header}         x-uyun-login-token=3cc40c1b2ded40958ff64efbd291707e
+@{boltdogmysql}    database='boltdog', user='root',password='123456',host='10.1.50.225',port=3306
+${linux_minio_name}    salt-minio-centos7
+${window_minio_name}    WIN-R9AQ3MMMAV9
+
+*** Test Cases ***
+resource_filelist
+    [Documentation]    Request URL:http://10.1.50.225:7000/boltdog/api/v1/res/osresource/query?currentPage=1&pageSize=10
+    ...    Request Method:GET
+    ...    Response Date:{"data":[{"createTime":1463213910000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":257,"modifyTime":1463214216000,"name":"Windows_WIN-R9AQ3MMMAV9","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","sysTags":"Windows"},{"createTime":1463127417000,"defTags":"","hostname":"salt-minio-centos7","id":256,"modifyTime":1463127724000,"name":"CentOS_salt-minio-centos7","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.233","sysTags":"CentOS"},{"createTime":1463213000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":253,"modifyTime":1463213000,"name":"Windows_WIN-R9AQ3MMMAV9","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","sysTags":"Windows"},{"createTime":1463213000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":255,"modifyTime":1463213000,"name":"Windows_WIN-R9AQ3MMMAV9","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","sysTags":"Windows"},{"createTime":1463127000,"defTags":"","hostname":"salt-minio-centos7","id":254,"modifyTime":1463127000,"name":"CentOS_salt-minio-centos7","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.233","sysTags":"CentOS"},{"createTime":1463126000,"defTags":"","hostname":"localhost.localdomain","id":252,"modifyTime":1463126000,"name":"CentOS_localhost.localdomain","resource":[],"runDuration":0,"runStatus":1,"serIp":"127.0.0.1","sysTags":"CentOS"}],"total":6}
+    Create Session    resourece_filelist_api    ${URL}
+    ${addr}    Get Request    resourece_filelist_api    /api/v1/res/osresource/query?currentPage=1&pageSize=10    headers=&{Header}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${data}    Get From Dictionary    ${responsedata}    data
+    ${num}    get length    ${data}
+    Connect To Database Using Custom Params    pymysql    @{boltdogmysql}
+    ${res_total}    query    select count(*) from resource
+    ${name}    query    select name from resource \ ORDER BY create_time DESC limit ${num}
+    Disconnect From Database
+    Dictionary Should Contain Item    ${responsedata}    total    ${res_total[0][0]}    msg=total is not right
+    ${items_name_list}    Create List
+    : FOR    ${i}    IN RANGE    ${num}
+    \    ${items_tmp}    Get From Dictionary    ${items[1][${i}]}    name
+    \    Append To List    ${items_name_list}    ${items_tmp}
+    Sort List    ${items_name_list}
+    ${mysql_name_list}    Create List
+    : FOR    ${i}    IN RANGE    ${num}
+    \    Append To List    ${mysql_name_list}    ${name[${i}][0]}
+    Sort List    ${mysql_name_list}
+    Lists Should Be Equal    ${items_name_list}    ${mysql_name_list}    msg=None    values=True    names=None
+
+resource_query
+    [Documentation]    Request URL:http://10.1.50.225:7000/boltdog/api/v1/res/osresource/query?currentPage=1&pageSize=10
+    ...    Request Method:GET
+    ...    Response Date:{"data":[{"createTime":1463213910000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":257,"modifyTime":1463214216000,"name":"Windows_WIN-R9AQ3MMMAV9","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","sysTags":"Windows"},{"createTime":1463127417000,"defTags":"","hostname":"salt-minio-centos7","id":256,"modifyTime":1463127724000,"name":"CentOS_salt-minio-centos7","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.233","sysTags":"CentOS"},{"createTime":1463213000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":253,"modifyTime":1463213000,"name":"Windows_WIN-R9AQ3MMMAV9","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","sysTags":"Windows"},{"createTime":1463213000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":255,"modifyTime":1463213000,"name":"Windows_WIN-R9AQ3MMMAV9","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","sysTags":"Windows"},{"createTime":1463127000,"defTags":"","hostname":"salt-minio-centos7","id":254,"modifyTime":1463127000,"name":"CentOS_salt-minio-centos7","resource":[],"runDuration":0,"runStatus":1,"serIp":"10.1.50.233","sysTags":"CentOS"},{"createTime":1463126000,"defTags":"","hostname":"localhost.localdomain","id":252,"modifyTime":1463126000,"name":"CentOS_localhost.localdomain","resource":[],"runDuration":0,"runStatus":1,"serIp":"127.0.0.1","sysTags":"CentOS"}],"total":6}
+    Create Session    resource_query_api    ${URL}
+    ${addr}    Get Request    resource_query_api    api/v1/res/osresource/query?currentPage=1&pageSize=10&key=${window_minio_name}    headers=&{Header}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${data}    Get From Dictionary    ${responsedata}    data
+    ${num}    get length    ${data}
+    Connect To Database Using Custom Params    pymysql    @{boltdogmysql}
+    ${res_total}    query    select count(*) from resource where name like '%${window_minio_name}%'
+    ${name}    query    select name from resource where name like '%${window_minio_name}%'
+    log    select name from resource where name like '%${window_minio_name}%'
+    Disconnect From Database
+    Dictionary Should Contain Item    ${responsedata}    total    ${res_total[0][0]}    msg=total is not right
+    ${items_name_list}    Create List
+    : FOR    ${i}    IN RANGE    ${num}
+    \    ${items_tmp}    Get From Dictionary    ${items[1][${i}]}    name
+    \    Append To List    ${items_name_list}    ${items_tmp}
+    Sort List    ${items_name_list}
+    ${mysql_name_list}    Create List
+    : FOR    ${i}    IN RANGE    ${num}
+    \    Append To List    ${mysql_name_list}    ${name[${i}][0]}
+    Sort List    ${mysql_name_list}
+    Lists Should Be Equal    ${items_name_list}    ${mysql_name_list}    msg=None    values=True    names=None
+
+resource_detail
+    [Documentation]    Request URL:http://10.1.50.225:7000/boltdog/api/v1/res/osresource/get?id=247
+    ...    Request Method:GET
+    ...    Response Date:{"createTime":1463555328000,"defTags":"","hostname":"WIN-R9AQ3MMMAV9","id":247,"modifyTime":1463555328000,"name":"Windows_WIN-R9AQ3MMMAV9","otherInfos":[{"code":"phyCPU","name":"物理CPU数量","value":1},{"code":"proCPU","name":"逻辑CPU数量","value":1},{"code":"cpuModel","name":"CPU型号","value":"Intel64 Family 6 Model 63 Stepping 2, GenuineIntel"},{"code":"cpuFreuency","name":"CPU频率","value":""},{"code":"memory","name":"内存大小","value":"8095 MB"},{"code":"virMemory","name":"虚拟内存大小","value":"8189 MB"}],"resourceType":{"className":"操作系统","id":8,"name":"Windows"},"runDuration":0,"runStatus":1,"serIp":"10.1.50.234","server":{"id":261,"ip":"","minionId":"234_win2008","minionStatus":0,"name":"","verifyMode":0},"sysTags":"Windows"}
+    Connect To Database Using Custom Params    pymysql    @{boltdogmysql}
+    ${res_id}    query    select id from resource where hostname ='${window_minio_name}'
+    Disconnect From Database
+    log    select id from resource where name ='${window_minio_name}'
+    log    ${res_id}
+    Create Session    resource_detail_api    ${URL}
+    ${addr}    Get Request    resource_detail_api    /api/v1/res/osresource/get?id=${res_id[0][0]}    headers=&{Header}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${sysTags}    Get From Dictionary    ${responsedata}    sysTags
+    ${name}    Get From Dictionary    ${responsedata}    hostname
+    Connect To Database Using Custom Params    pymysql    @{boltdogmysql}
+    ${name_sql}    query    select hostname from resource where hostname = '${window_minio_name}'
+    ${sysTags_sql}    query    select sys_tags from resource where hostname='${window_minio_name}'
+    Disconnect From Database
+    Should Be Equal As Strings    ${sysTags}    ${sysTags_sql[0][0]}    sysTags is not right
+    Should Be Equal As Strings    ${name}    ${name_sql[0][0]}    name is not right

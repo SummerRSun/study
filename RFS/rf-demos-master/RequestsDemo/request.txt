@@ -1,0 +1,178 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+Library           XML
+Library           YamlLibrary
+Library           CustomLibrary
+
+*** Test Cases ***
+case1
+    Create Session    api    http://localhost:8000
+    ${addr}    Get Request    api    users/1
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${str}    Get From Dictionary    ${responsedata}    1
+    ${addr}    Get Request    api    users/5
+    Should Be Equal As Strings    ${addr.status_code}    404
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${str}    Get From Dictionary    ${responsedata}    message
+    Delete All Sessions
+
+case2
+    Create Session    api    http://localhost:8000
+    ${addr}    Get Request    api    hello/libin
+    Comment    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${str}    Get From Dictionary    ${responsedata}    hello
+    #xml方式
+    ${dict}    Create Dictionary    accept=application/xml
+    ${addr}    Get Request    api    hello/libin    ${dict}
+    Comment    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    Set Variable    ${addr.content}
+    ${body}    Get Element Text    ${responsedata}    hello
+    ${hello}    Get Element    ${responsedata}    hello
+    Log    ${hello.text}
+    ${responsedata}    Add Element    ${responsedata}    <new id="3">test</new>
+    ${new}    Get Element Attribute    ${responsedata}    id    new
+    Log    ${new}
+    ${a}    Element To String    ${responsedata}
+    Delete All Sessions
+
+case3
+    #用户密码
+    ${auth}    Create List    ok    python
+    Create Session    api    http://localhost:8000    \    \    ${auth}
+    ${addr}    Get Request    api    401
+    Comment    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${str}    Get From Dictionary    ${responsedata}    pass
+    Delete All Sessions
+
+case4
+    ${dict}    Create Dictionary    Content-Type=application/x-www-form-urlencoded
+    Create Session    api    http://localhost:8000    ${dict}
+    ${data}    Create Dictionary    username=libin    password=haha
+    ${addr}    Post Request    api    post    data=${data}
+    Comment    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    Log    ${addr.json()}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${str}    Get From Dictionary    ${responsedata}    username
+    Delete All Sessions
+
+case5
+    [Documentation]    查询仪表盘
+    ...    请求地址：
+    ...    http://10.1.10.17:7303/api/v2/dashboards/query?name=a
+    ...    请求方式： get
+    ...    返回格式：
+    ...    [
+    ...    {
+    ...    "id": 1,
+    ...    "name": "aa",
+    ...    "dashwindowIdList": [
+    ...    1,
+    ...    3,
+    ...    2
+    ...    ],
+    ...    "type": "TimeBoard",
+    ...    "template": true,
+    ...    "modified": 1461204930000,
+    ...    "userId": "damin",
+    ...    "tenantId": "1",
+    ...    "descr": ""
+    ...    }
+    ...    ]
+    ${dict}    Create Dictionary    name=a
+    Create Session    api    http://10.1.51.244
+    ${addr}    Get Request    api    api/v2/dashboards/query    params=${dict}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata[0]}
+    ${items}    Get Dictionary Items    ${responsedata[0]}
+    ${values}    Get Dictionary Values    ${responsedata[0]}
+    ${id}    Get From Dictionary    ${responsedata[0]}    id
+    Should Be Equal As Strings    ${id}    1
+    ${name}    Get From Dictionary    ${responsedata[0]}    name
+    Should Be Equal As Strings    ${name}    aa
+    Delete All Sessions
+
+case6
+    [Documentation]    请求地址：
+    ...    http://10.1.10.17:7303/api/v2/dashboards/create
+    ...    请求方式： POST
+    ...    Headers:
+    ...    Content-Type:application/json
+    ...    请求格式：
+    ...    {
+    ...    "name":"aaa1",
+    ...    "type":"timeseries",
+    ...    "template":false,
+    ...    "modified":"2016-04-20",
+    ...    "userId":"admin",
+    ...    "tenantId":1,
+    ...    "descr":"test"
+    ...    }
+    ...    返回格式：
+    ...    {
+    ...    "id": 3,
+    ...    "name": "aaa1",
+    ...    "dashwindowIdList": null,
+    ...    "type": "timeseries",
+    ...    "template": false,
+    ...    "modified": 1461110400000,
+    ...    "userId": "admin",
+    ...    "tenantId": "1",
+    ...    "descr": "test"
+    ...    }
+    ${headers}    Create Dictionary    Content-Type=application/json
+    Create Session    api    http://10.1.51.244
+    ${data}    Create Dictionary    name=aaa1    type=timeseries    template=false    modified=2016-04-20    userId=admin
+    ...    tenantId=1    descr=test
+    ${addr}    Post Request    api    api/v2/dashboards/create    data=${data}    headers=${headers}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    Log    ${addr.json()}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${id}    Get From Dictionary    ${responsedata}    id
+    Should Be Equal As Strings    ${id}    3
+    Delete All Sessions
+
+case7
+    ${yaml_string} =    Set Variable    { Employer: { Name: Microsoft,Office: { China: [ Beijing, Shanghai ], UK: [ London ] }, Staff : [ { ID: 001, name: Fred, age: 30 }, { ID: 102, name: Jenny, age: 21 } ],},School: { middle: xxx_school, high_school: zzz_school, colleage_school: sss_school }, }
+    ${cmp_string }=    Set Variable    { Employer: { Staff : [ { ID: y > 100, name: Jenny, age: 16 < y < 50 } ] } }
+    ${company}=    Get Tree    ${yaml_string}    Employer.Name
+    ${staff_list}=    Get Tree    ${yaml_string}    Employer.Staff
+    ${education_schools} =    Get Tree    ${yaml_string}    School
+    ${fred_age}=    Get Tree    ${yaml_string}    Employer.Staff.0.age
+    ${fred_age}=    Get Tree    ${yaml_string}    Employer.Staff/name=Fred/age
+    ${fred_age}=    Get Tree    ${yaml_string}    Employer.Staff/name~^Fred$/age
+    Nodes Should Match    ${yaml_string}    Employer.Staff/name~^Fred$/age    16 < y < 60
+    Nodes Should Match    ${yaml_string}    .    ${cmp_string }
+
+case8
+    log    hello world

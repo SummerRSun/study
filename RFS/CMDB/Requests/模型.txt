@@ -1,0 +1,513 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+Library           CustomLibrary
+Library           YamlLibrary
+Resource          resource.txt
+
+*** Test Cases ***
+3.1.1-1获取类的数结构
+    [Documentation]    URI定义： crab/api/v1/classes
+    ...
+    ...    请求方式：get
+    ...
+    ...    {
+    ...    "children": null
+    ...    "path": "Router"
+    ...    "code": "TEST123"
+    ...    "id": "57342f4ef72cf913334f5d2b"
+    ...    "tenant": "tenant1"
+    ...    "builtin": false
+    ...    "sortIndex": 1
+    ...    "name": "路由器"
+    ...    }
+    ${token}    LoginTenant
+    ${header}    create dictionary    Cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes    get    headers=${header}
+    should be equal as strings    ${response.status_code }    200
+    ${content}    to json    ${response.content }
+    nodes should match    ${content[0]}    .    {"name":"业务应用"}
+    nodes should match    ${content[1]}    .    {"name":"运行资源"}
+    nodes should match    ${content[2]}    .    {"name":"基础资源"}
+    nodes should match    ${content[3]}    .    {"name":"机房设施"}
+    nodes should match    ${content[4]}    .    {"name":"地理位置"}
+    nodes should match    ${content[5]}    .    {"name":"组织机构"}
+    nodes should match    ${content[0]}    children.0    {"name": "应用"}
+    nodes should match    ${content[0]}    children.1    {"name": "业务系统"}
+    Delete all sessions
+
+3.1.1-2获取所有网络设备Error
+    [Documentation]    URI定义： crab/api/v1/classes?parentCode=NetDev&childOnly=false
+    ...    请求方式：get
+    ...
+    ...    {
+    ...    "id":"a2d4d287-e4f5-4f58-9a4e-36f57d65e00e",
+    ...    "code":"NetDev",
+    ...    "path":"BaseDevice/NetDev",
+    ...    "name":"网络设备",
+    ...    "sortIndex":0,
+    ...    "children":[
+    ...    {"id":"81ff1f76-4586-480b-b287-ffc199c70492",
+    ...    "code":"Router",
+    ...    "path":"BaseDevice/NetDev/Router",
+    ...    "name":"路由器",
+    ...    "children":null,
+    ...    },
+    ...    …
+    ...    ]
+    ...    }
+    ${token}    LoginTenant
+    ${header}    create dictionary    Cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes?parentCode=NetDev&childOnly=false    get    headers=${header}
+    should be equal as strings    ${response.status_code }    200
+    ${content}    to json    ${response.content }
+    ${name}    get from dictionary    ${content[0]}    name
+    nodes should match    ${content[0]}    .    {"name":"网络设备"}
+    ${aa}    get tree    ${content[0]}    children
+    ${bb}    get tree    ${aa[0]}    name
+    should be equal as strings    ${bb}    路由器
+    Delete all sessions
+
+3.1.2获取类详细信息
+    [Documentation]    URI 定义： crab/api/v1/classes/Router
+    ...
+    ...    请求方式：get
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {
+    ...    "id":"81ff1f76-4586-480b-b287-ffc199c70492",
+    ...    "code":"Router",
+    ...    "path":"BaseDevice/NetDev/Router",
+    ...    "name":"路由器"
+    ...    }
+    ${token}    LoginTenant
+    ${header}    create dictionary    Cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router    get    headers=${header}
+    should be equal as strings    ${response.status_code }    200
+    ${content}    to json    ${response.content }
+    Nodes should Match    ${content}    .    {"code": "Router","path": "Infrastructure/Router","name": "路由器"}
+    Delete All Sessions
+
+3.1.3提交单个类
+    [Documentation]    URI 定义： crab/api/v1/classes/Fiber
+    ...
+    ...    请求方式：post
+    ...
+    ...    HTTP body:
+    ...    {
+    ...    "name": "光纤",
+    ...    "code": "Fiber",
+    ...    "path":"Object/BaseDevice/netDevice/Fiber",
+    ...    "sortIndex":1
+    ...    }
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，返加类的Id
+    ...    "81ff1f76-4586-480b-b287-ffc199c70492"
+    ${token}    LoginTenant
+    ${header}    Create Dictionary    Content-Type=application/json    cookie=token=${token}
+    ${data}    eval dict    {"name": "光纤","code": "Fiber","path":"Object/BaseDevice/netDevice/Fiber","sortIndex":1}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Fiber    post    ${data}    ${header}
+    should be equal as strings    ${response.status_code}    200
+    length should be    ${response.content}    24
+    Delete All Sessions
+
+3.1.4删除类
+    [Documentation]    根所类的编码删除类
+    ...
+    ...    URI 定义：crab/api/v1/classes/{classCode}/delete
+    ...    请求方式 ： POST
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    响应内容为文本： true/false
+    ${token}    LoginTenant
+    ${headers}    Create Dictionary    Content-Type=application/json    cookie=token=${token}
+    ${response}    Run interface test    ${cmdb_api}/crab/api/v1/classes/Fiber/delete    post    headers=${headers}
+    should be equal as strings    ${response.status_code}    200
+    should be equal as strings    ${response.content}    true
+    delete all sessions
+
+3.1.5获取指定类的属性列表
+    [Documentation]    URI 定义：crab/api/v1/classes/{classcode}/attributes
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    [{"id":"ciStatus",
+    ...    "code":"ciStatus",
+    ...    "name":"配置项状态",
+    ...    "descr":null,
+    ...    "dataType":"dict",
+    ...    "sortIndex":0,
+    ...    "defaultValue":"using",
+    ...    params{
+    ...    validate{
+    ...    maxLength:xx
+    ...    \ \ \ maxValue:xx
+    ...    minValue:xx
+    ...    errorMessage:xxx
+    ...    },
+    ...    values:[测试中，使用中，维护中]
+    ...    }
+    ...    }
+    ...    {"id":"f7cb2710-d6f2-41ae-b488-8b3d9b4f9db2",
+    ...    "code":"superintendent",
+    ...    "name":"责任人",
+    ...    …
+    ...    },
+    ...    {"id":"886fa794-86f4-4532-b4aa-8945054bb7a0",
+    ...    "code":"dept",
+    ...    "name":"部门",
+    ...    …
+    ...    },
+    ...    {"id":"76a39a8b-85fd-4aec-b65f-a461f904c8a1",
+    ...    "code":"position",
+    ...    "name":"位置",
+    ...    …
+    ...    }
+    ...    ]
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Fiber/attributes    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200
+    ${content}    to json    ${response.content}
+    nodes should match    ${content[0]}    .    {"classCode": "Fiber"}
+    Comment    nodes should match    ${content}    .    [ \ \ { \ \ \ \ "id": "573c21a4f72cf9236132a0b3", \ \ \ \ "tenant": "d32cafa51570447a8d14f5ec5e4f135e", \ \ \ \ "classCode": "Fiber", \ \ \ \ "code": "name", \ \ \ \ "name": "名称", \ \ \ \ "type": "singleRowText", \ \ \ \ "defaultValue": null, \ \ \ \ "required": true, \ \ \ \ "builtin": true, \ \ \ \ "unit": null, \ \ \ \ "params": null, \ \ \ \ "sortIndex": 0, \ \ \ \ "descr": "CI名称" \ \ } ]
+    delete all sessions
+
+3.1.6获取类的指定属性
+    [Documentation]    URI定义：/crab/api/v1/classes/{classCode}/attributes/{attributescode}
+    ...    请求地址：*/crab/api/v1/classes/Fiber/attributes/name
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {
+    ...    "id":"886fa794-86f4-4532-b4aa-8945054bb7a0",
+    ...    "classCode":"Router",
+    ...    "code":"dept",
+    ...    "name":"名称",
+    ...    "descr":"配置项的名称",
+    ...    "dataType":"text",
+    ...    "defaultValue":null,
+    ...    params{
+    ...    validate{
+    ...    maxLength:xx
+    ...    \ \ \ maxValue:xx
+    ...    \ \ \ minValue:xx
+    ...    errorMessage:xxx
+    ...    }
+    ...    }
+    ...    }
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Fiber/attributes/name    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200
+    ${content}    to json    ${response.content}
+    nodes should match    ${content}    .    {"classCode": "Fiber"}
+    Comment    nodes should match    ${content}    .    { \ \ "id": "573c21a4f72cf9236132a0b3", \ \ "tenant": "d32cafa51570447a8d14f5ec5e4f135e", \ \ "classCode": "Fiber", \ \ "code": "name", \ \ "name": "名称", \ \ "type": "singleRowText", \ \ "defaultValue": null, \ \ "required": true, \ \ "builtin": true, \ \ "unit": null, \ \ "params": null, \ \ "sortIndex": 0, \ \ "descr": "CI名称" }
+    delete all sessions
+
+3.1.7提交类的单个属性
+    [Documentation]    URI定义：crab/api/v1/classes/{classCode}/attributes/{attributeCode}
+    ...
+    ...    请求地址：*/crab/api/v1/classes/Fiber/attributes/snmpSupport
+    ...
+    ...    请求方式：post
+    ...
+    ...    HTTP body:
+    ...    {
+    ...    "classCode": "Router",
+    ...    "code": "snmpSupport",
+    ...    "name": "支持snmp协议",
+    ...    "descr": "支持snmp协议",
+    ...    "type": "singleSelect",
+    ...    "defaultValue": "是",
+    ...    "params": {
+    ...    "values": [
+    ...    "是",
+    ...    "否"
+    ...    ]
+    ...    }
+    ...    }
+    ...
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，返回属性的ID。
+    ...    "886fa794-86f4-4532-b4aa-8945054bb7dd"
+    ${token}    LoginTenant
+    ${header}    Create Dictionary    Content-Type=application/json    cookie=token=${token}
+    ${data}    eval dict    { "classCode": "Router", "code": "snmpSupport", "name": "支持snmp协议", "descr": "支持snmp协议", "type": "singleSelect", "defaultValue": "是", "params": { "values": [ "是", "否" ] } }
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Fiber/attributes/snmpSupport    post    ${data}    ${header}
+    should be equal as strings    ${response.status_code}    200
+    length should be    ${response.content}    24
+    Delete All Sessions
+
+3.1.8删除类的属性
+    [Documentation]    URI定义：/crab/api/v1/classes/{classCode}/attributes/{attributeCode}/delete
+    ...
+    ...    请求地址：*/crab/api/v1/classes/Fiber/attributes/snmpSupport/delete
+    ...
+    ...    请求方式：post
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...    true
+    ${token}    LoginTenant
+    ${header}    Create Dictionary    Content-Type=application/json    cookie=token=${token}
+    ${response}    Run interface test    ${cmdb_api}/crab/api/v1/classes/Fiber/attributes/snmpSupport/delete    post    headers=${header}
+    should be equal as strings    ${response.status_code}    200
+    should be equal as strings    ${response.content}    true
+    delete all sessions
+
+3.1.9查询类的表单
+    [Documentation]    功能：查询类的表单
+    ...    URI定义：/crab/api/v1/classes/{classCode}/forms
+    ...
+    ...    获取表单
+    ...    请求地址：*/crab/api/v1/classes/Router/forms
+    ...
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {"classCode":"Router",
+    ...    "form":{表单内容}
+    ...    }
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/forms    get    headers=${header}
+    should be equal as strings    ${response.status_code }    200
+    ${content}    to json    ${response.content }
+    Dictionary Should Contain Key    ${content}    form
+    Nodes should Match    ${content}    .    {"classCode": "Router"}
+    Nodes should Match    ${content}    form.0    {"classCode": "Router","code": "snmpSupport","name": "支持snmp协议","type": "singleSelect"}
+    Delete All Sessions
+
+3.1.10提交类的表单
+    [Documentation]    功能：新建或更新类的表单
+    ...    URI定义：/crab/api/v1/classes/{classCode}/forms
+    ...
+    ...    提交表单，请求POST
+    ...    请求地址：*/crab/api/v1/classes/Router/forms
+    ...
+    ...
+    ...    请求方式： post
+    ...    请求需要设置HTTP \ body信息。
+    ...    {
+    ...    "classCode": "Router",
+    ...    "form": [
+    ...    {
+    ...    "classCode": "Router",
+    ...    "code": "snmpSupport",
+    ...    "name": "支持snmp协议",
+    ...    "descr": "支持snmp协议",
+    ...    "type": "singleSelect",
+    ...    "defaultValue": "是",
+    ...    "params": {
+    ...    "values": [
+    ...    "是",
+    ...    "否"
+    ...    ]
+    ...    }
+    ...    }
+    ...    ]
+    ...    }
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，响应表单ID。
+    ...    "886fa794-86f4-4532-b4aa-8945054dded"
+    ${token}    LoginTenant
+    ${header}    Create Dictionary    Content-Type=application/json    cookie=token=${token}
+    ${data}    eval dict    {"classCode": "Router","form": [{"classCode": "Router","code": "snmpSupport","name": "支持snmp协议","descr": "支持snmp协议","type": "singleSelect","defaultValue": "是","params": {"values": ["是","否"]}}]}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/forms    post    ${data}    ${header}
+    should be equal as strings    ${response.status_code}    200
+    length should be    ${response.content}    24
+    Delete All Sessions
+
+3.1.11_1类编码检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkCode/{newClassCode}
+    ...
+    ...    新建类时查检编码Router是否补占用：
+    ...    请求地址：*/crab/api/v1/classes/0/checkCode/Router
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/0/checkCode/Router    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    false
+    delete all sessions
+
+3.1.11_2类编码检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkCode/{newClassCode}
+    ...
+    ...    检查Router类的编码是否可修改为Router1：
+    ...    请求地址：*/crab/api/v1/classes/Router/checkCode/Router1
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/checkCode/Router1    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    true
+    delete all sessions
+
+3.1.12_1类名检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkName/{newClassName}
+    ...
+    ...    新建类时查检编码Router是否补占用：
+    ...    请求地址：*/crab/api/v1/classes/0/checkName/路由器
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/0/checkName/路由器    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    false
+    delete all sessions
+
+3.1.12_2类名检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkCode/{newClassCode}
+    ...
+    ...    查检Router的类名是否可修改为路由器
+    ...    请求地址：*/crab/api/v1/classes/Router/checkName/路由器
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/checkName/路由器    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    false
+    delete all sessions
+
+3.1.13_1属性编码检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkCode/{newAttrCode}
+    ...
+    ...    新建属性时查检编码ipAddr是否可用：
+    ...    请求地址：*/crab/api/v1/classes/Router/attributes/0/checkCode/ipAddr
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/attributes/0/checkCode/ipAddr    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    true
+    delete all sessions
+
+3.1.13_2属性编码检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkCode/{newAttrCode}
+    ...
+    ...    查检Router类的属性ipAddr新名称IP地址1是否可用
+    ...    请求地址：*/crab/api/v1/classes/Router/attributes/ipAddr/checkName/ipAddr1
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/attributes/ipAddr/checkName/ipAddr1    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    true
+    delete all sessions
+
+3.1.14_1属性名称检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkName/{newAttrName}
+    ...
+    ...    新建属性时查检编码ipAddr是否可用：
+    ...    请求地址：*/crab/api/v1/classes/Router/attributes/0/checkName/IP地址
+    ...
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/attributes/0/checkName/10.1.1.11    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    true
+    delete all sessions
+
+3.1.14_2属性名称检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkName/{newAttrName}
+    ...
+    ...    查检Router类的属性ipAddr新名称IP地址1是否可用
+    ...    请求地址：*/crab/api/v1/classes/Router/attributes/ipAddr/checkName/IP地址1
+    ...
+    ...
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes/Router/attributes/ipAddr/checkName/10.1.1.12    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200    ${response.content}    true
+    delete all sessions
+
+3.1.15获取数据类型
+    [Documentation]    获取类的数据类型列表和属性定义模板
+    ...    URI定义：/crab/api/v1/datatypes
+    ...
+    ...    新建属性时查检编码ipAddr是否可用：
+    ...    请求地址：*/crab/api/v1/datatypes
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回web页面Json格式数据：
+    ...    [{"name":"日期时间","type":"dateTime",
+    ...    "fields":[
+    ...    {"key":"name","text":"字段,"type":"text","nullAble":true,"multiple":false}
+    ...    …
+    ...    ]},
+    ...    {"name":"附件","type":"image",
+    ...    "fields":[
+    ...    {"key":"name","text":"字段,"type":"text","nullAble":true,"multiple":false},
+    ...    …
+    ...    ]},
+    ...    …
+    ...    ]
+    ${token}    LoginTenant
+    ${header}    create dictionary    cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/datatypes    get    headers=${header}
+    should be equal as strings    ${response.status_code}    200
+    ${content}    to json    ${response.content}
+    nodes should match    ${content[0]}    .    {"name": "日期时间", "type": "dateTime"}
+    delete all sessions
+
+testCOPY
+    ${heades1}    create dictionary    Content-Type=application/json
+    ${data1}    create dictionary    email=tangjt@uyunsoft.cn    passwd=e10adc3949ba59abbe56e057f20f883e
+    Create Session    api    http://tenant.uyuntest.cn/tenant
+    ${addr}    post request    api    api/v1/user/login    headers=${heades1}    data=${data1}
+    should be equal as strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${token}    get tree    ${addr.content}    data.token
+    log    ${token}
+    ${header}    create dictionary    Cookie=token=${token}
+    ${response}    run interface test    ${cmdb_api}/crab/api/v1/classes    get    headers=${header}
+    should be equal as strings    ${response.status_code }    200
+    ${content}    to json    ${response.content }
+    ${name}    get from dictionary    ${content[2]}    name
+    nodes should match    ${content[0]}    .    {"name":"业务应用"}
+    ${aa}    get tree    ${content[2]}    children
+    ${bb}    get tree    ${aa[0]}    name
+    should be equal as strings    ${bb}    路由器
+    Delete all sessions

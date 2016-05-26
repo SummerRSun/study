@@ -1,0 +1,22 @@
+*** Settings ***
+Library           CustomLibrary
+Resource          keyword.txt
+Library           RequestsLibrary
+Library           YamlLibrary
+Library           Collections
+
+*** Test Cases ***
+组织结构-添加(未开发)
+    log    未开发
+
+组织结构-编辑(未开发)
+    log    未开发
+
+组织结构-删除(未开发)）
+    log    未开发
+
+组织结构-查看详情(未开发)
+    log    未开发
+
+组织结构-查询列表(未开发)
+    log    未开发

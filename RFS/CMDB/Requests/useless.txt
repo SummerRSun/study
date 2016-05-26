@@ -1,0 +1,515 @@
+*** Settings ***
+Resource          resource.txt
+
+*** Test Cases ***
+3.1.1-1获取类的数结构
+    [Documentation]    请求地址：http://10.1.51.226:7200/crab/api/v1/classes
+    ...
+    ...    请求方式：get
+    ...
+    ...    {
+    ...    "children": null
+    ...    "path": "Router"
+    ...    "code": "TEST123"
+    ...    "id": "57342f4ef72cf913334f5d2b"
+    ...    "tenant": "tenant1"
+    ...    "builtin": false
+    ...    "sortIndex": 1
+    ...    "name": "路由器"
+    ...    }
+    Create Session    api    http://uyuntest.cn/
+    ${addr}    Get Request    api    crab/api/v1/classes
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata[0]}
+    ${items}    Get Dictionary Items    ${responsedata[0]}
+    ${values}    Get Dictionary Values    ${responsedata[0]}
+    ${name}    Get From Dictionary    ${responsedata[0]}    name
+    ${path}    Get From Dictionary    ${responsedata[1]}    path
+    Should Be Equal As Strings    ${name}    路由器    ${path}    Swith
+    Delete All Sessions
+
+3.1.1-2获取所有网络设备Error
+    [Documentation]    请求地址：http://10.1.51.226:7200/crab/api/v1/classes?parentCode=NetDev&childOnly=false
+    ...    请求方式：get
+    ...
+    ...    {
+    ...    "id":"a2d4d287-e4f5-4f58-9a4e-36f57d65e00e",
+    ...    "code":"NetDev",
+    ...    "path":"BaseDevice/NetDev",
+    ...    "name":"网络设备",
+    ...    "sortIndex":0,
+    ...    "children":[
+    ...    {"id":"81ff1f76-4586-480b-b287-ffc199c70492",
+    ...    "code":"Router",
+    ...    "path":"BaseDevice/NetDev/Router",
+    ...    "name":"路由器",
+    ...    "children":null,
+    ...    },
+    ...    …
+    ...    ]
+    ...    }
+    ${dict}    Create Dictionary    parentCode=NetDev    childOnly=false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes    params=${dict}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${code}    Get From Dictionary    ${responsedata}    code
+    Should Be Equal As Strings    ${code}    网络设备
+    ${children}    Get From Dictionary    ${responsedata}    children
+    ${responsedata1}    To Json    ${children.content}
+    ${childcode}    Get From Dictionary    ${responsedata1}    code
+    Should Be Equals As Strings    ${childcode}    路由器
+    Delete All Sessions
+
+3.1.2获取类详细信息
+    [Documentation]    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Swith
+    ...
+    ...    请求方式：get
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {
+    ...    "id":"81ff1f76-4586-480b-b287-ffc199c70492",
+    ...    "code":"Router",
+    ...    "path":"BaseDevice/NetDev/Router",
+    ...    "name":"路由器"
+    ...    }
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Swith
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${keys}    Get Dictionary Keys    ${responsedata}
+    ${items}    Get Dictionary Items    ${responsedata}
+    ${values}    Get Dictionary Values    ${responsedata}
+    ${name}    Get From Dictionary    ${responsedata}    name
+    ${path}    Get From Dictionary    ${responsedata}    path
+    Should Be Equal As Strings    ${name}    交换机    ${path}    Swith
+    Delete All Sessions
+
+3.1.3提交单个类
+    [Documentation]    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Fiber
+    ...
+    ...    请求方式：post
+    ...
+    ...    HTTP body:
+    ...    {
+    ...    "name": "光纤",
+    ...    "code": "Fiber",
+    ...    "path":"Object/BaseDevice/netDevice/Fiber",
+    ...    "sortIndex":1
+    ...    }
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，返加类的Id
+    ...    "81ff1f76-4586-480b-b287-ffc199c70492"
+    ${header}    Create Dictionary    Content-Type=application/json
+    Create Session    api    http://10.1.51.226:7200
+    ${data}    Create Dictionary    name=光纤    code=Fiber    path=Object/BaseDevice/netDevice/Fiber    sortIndex=1
+    ${addr}    Post Request    api    crab/api/v1/classes/Fiber    headers=${header}    data=${data}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${id}    set Variable    ${addr.content}
+    Comment    Should Be Equal As Strings    ${id}    57369a06f72cf908069bb52c
+    ${length}    get length    ${id}
+    log    ${length}
+    Should Be Equal As Strings    ${length}    24
+    Delete All Sessions
+
+3.1.4删除类
+    [Documentation]    根所类的编码删除类
+    ...    http://10.1.51.226:7200/crab/api/v1/classes/{classCode}/delete
+    ...    请求方式 \ POST
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    响应内容为文本： true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Post Request    api    crab/api/v1/classes/Fiber/delete
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set Variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+
+3.1.5获取指定类的属性列表
+    [Documentation]    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/{classcode}/attributes
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {
+    ...    "id": "5736b7a3f72cf908069bb53f"
+    ...    "tenant": "tenant1"
+    ...    "classCode": "Fiber"
+    ...    "code": "name"
+    ...    "name": "名称"
+    ...    "type": "singleRowText"
+    ...    "defaultValue": null
+    ...    "required": true
+    ...    "builtin": true
+    ...    "unit": null
+    ...    "params": null
+    ...    "sortIndex": 0
+    ...    "descr": "CI名称"
+    ...    }
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Fiber/attributes
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${classcode}    Get From Dictionary    ${responsedata[0]}    classCode
+    Should Be Equal As Strings    ${classcode}    Fiber
+    Delete All sessions
+
+3.1.6获取类的指定属性
+    [Documentation]    URI定义：/crab/api/v1/classes/{classCode}/attributes/{attributescode}
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Fiber/attributes/name
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {
+    ...    "id":"886fa794-86f4-4532-b4aa-8945054bb7a0",
+    ...    "classCode":"Router",
+    ...    "code":"dept",
+    ...    "name":"名称",
+    ...    "descr":"配置项的名称",
+    ...    "dataType":"text",
+    ...    "defaultValue":null,
+    ...    params{
+    ...    validate{
+    ...    maxLength:xx
+    ...    \ \ \ maxValue:xx
+    ...    \ \ \ minValue:xx
+    ...    errorMessage:xxx
+    ...    }
+    ...    }
+    ...    }
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Fiber/attributes/name
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${classcode}    Get From Dictionary    ${responsedata}    classCode
+    Should Be Equal As Strings    ${classcode}    Fiber
+    Delete All sessions
+
+3.1.7提交类的单个属性qu
+    [Documentation]    URI定义：crab/api/v1/classes/{classCode}/attributes/{attributeCode}
+    ...
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Fiber/attributes/snmpSupport
+    ...
+    ...    请求方式：post
+    ...
+    ...    HTTP body:
+    ...    {
+    ...    "classCode": "Router",
+    ...    "code": "snmpSupport",
+    ...    "name": "支持snmp协议",
+    ...    "descr": "支持snmp协议",
+    ...    "type": "singleSelect",
+    ...    "defaultValue": "是",
+    ...    "params": {
+    ...    "values": [
+    ...    "是",
+    ...    "否"
+    ...    ]
+    ...    }
+    ...    }
+    ...
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，返回属性的ID。
+    ...    "886fa794-86f4-4532-b4aa-8945054bb7dd"
+    ${header}    Create Dictionary    Content-Type=application/json
+    Create Session    api    http://10.1.51.226:7200
+    ${data}    Create Dictionary    classCode=Fiber    code=snmpSupport    name=支持snmp协议    descr=支持snmp协议    type=singleSelect
+    ...    defaultValue=是
+    ${addr}    Post Request    api    crab/api/v1/classes/Fiber/attributes/snmpSupport    headers=${header}    data=${data}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${id}    set Variable    ${addr.content}
+    Should Not Be Empty    ${addr.content}
+    ${length}    get length    ${id}
+    log    ${length}
+    Should Be Equal As Strings    ${length}    24
+    Delete All Sessions
+
+3.1.8删除类的属性
+    [Documentation]    URI定义：/crab/api/v1/classes/{classCode}/attributes/{attributeCode}/delete
+    ...
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Fiber/attributes/snmpSupport/delete
+    ...
+    ...    请求方式：post
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...    true
+    ${header}    Create Dictionary    Content-Type=application/json
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Post Request    api    crab/api/v1/classes/Fiber/attributes/snmpSupport/delete    headers=${header}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    Log    ${addr.content}
+    ${responsedata}    set Variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All Sessions
+
+3.1.9查询类的表单
+    [Documentation]    功能：查询类的表单
+    ...    URI定义：/crab/api/v1/classes/{classCode}/forms
+    ...
+    ...    获取表单
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/forms
+    ...
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200，主体内容如下所示。
+    ...
+    ...    {"classCode":"Router",
+    ...    "form":{表单内容}
+    ...    }
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/forms
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${classCode}    Get From Dictionary    ${responsedata}    classCode
+    ${form}    Get From Dictionary    ${responsedata}    form
+    Should Be Equal As Strings    ${classCode}    Router
+    Dictionary Should Contain Key    ${responsedata}    form
+    Delete All sessions
+
+3.1.10提交类的表单Error
+    [Documentation]    功能：新建或更新类的表单
+    ...    URI定义：/crab/api/v1/classes/{classCode}/forms
+    ...
+    ...    提交表单，请求POST
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/forms
+    ...
+    ...
+    ...    请求方式： post
+    ...    请求需要设置HTTP \ body信息。
+    ...    {
+    ...    "classCode": "Router",
+    ...    "form": [
+    ...    {
+    ...    "classCode": "Router",
+    ...    "code": "snmpSupport",
+    ...    "name": "支持snmp协议",
+    ...    "descr": "支持snmp协议",
+    ...    "type": "singleSelect",
+    ...    "defaultValue": "是",
+    ...    "params": {
+    ...    "values": [
+    ...    "是",
+    ...    "否"
+    ...    ]
+    ...    }
+    ...    }
+    ...    ]
+    ...    }
+    ...
+    ...
+    ...    获取成功后返回的响应码为200，响应表单ID。
+    ...    "886fa794-86f4-4532-b4aa-8945054dded"
+    Create Session    api    http://10.1.51.226:7200
+    ${data}    Create Dictionary    classCode=Router
+    ${addr}    Post Request    api    crab/api/v1/classes/Router/forms    data=${data}
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${id}    set variable    ${addr.content}
+    ${length}    Get Length    ${id}
+    Should Be Equal As Strings    ${length}    24
+    Should Not Be Empty    ${id}
+    Delete All sessions
+
+3.1.11_1类编码检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkCode/{newClassCode}
+    ...
+    ...    新建类时查检编码Router是否补占用：
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/0/checkCode/Router
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/0/checkCode/Router
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All sessions
+
+3.1.11_2类编码检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkCode/{newClassCode}
+    ...
+    ...    检查Router类的编码是否可修改为Router1：
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/checkCode/Router1
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/checkCode/Router1
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All sessions
+
+3.1.12_1类名检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkName/{newClassName}
+    ...
+    ...    新建类时查检编码Router是否补占用：
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/0/checkName/路由器
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/0/checkName/路由器
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    false
+    Delete All sessions
+
+3.1.12_2类名检查
+    [Documentation]    URI定义：/crab/api/v1/classses/{classCode}/checkCode/{newClassCode}
+    ...
+    ...    查检Router的类名是否可修改为路由器
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/checkName/路由器
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/checkName/路由器
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    false
+    Delete All sessions
+
+3.1.13_1属性编码检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkCode/{newAttrCode}
+    ...
+    ...    新建属性时查检编码ipAddr是否可用：
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/attributes/0/checkCode/ipAddr
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/attributes/0/checkCode/ipAddr
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All sessions
+
+3.1.13_2属性编码检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkCode/{newAttrCode}
+    ...
+    ...    查检Router类的属性ipAddr新名称IP地址1是否可用
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/attributes/ipAddr/checkName/ipAddr1
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/attributes/ipAddr/checkName/ipAddr1
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All sessions
+
+3.1.14_1属性名称检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkName/{newAttrName}
+    ...
+    ...    新建属性时查检编码ipAddr是否可用：
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/attributes/0/checkName/IP地址
+    ...
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/attributes/0/checkName/IP地址
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All sessions
+
+3.1.14_2属性名称检查
+    [Documentation]    新建修改属性时检查新值是否可用
+    ...    URI定义：/crab/api/v1/classses/{classCode}/attributes/{attrCode}/checkName/{newAttrName}
+    ...
+    ...    查检Router类的属性ipAddr新名称IP地址1是否可用
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/classes/Router/attributes/ipAddr/checkName/IP地址1
+    ...
+    ...
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回文本数据: \ true/false
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/classes/Router/attributes/ipAddr/checkName/IP地址1
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    set variable    ${addr.content}
+    Should Be Equal As Strings    ${responsedata}    true
+    Delete All sessions
+
+3.1.15获取数据类型
+    [Documentation]    获取类的数据类型列表和属性定义模板
+    ...    URI定义：/crab/api/v1/datatypes
+    ...
+    ...    新建属性时查检编码ipAddr是否可用：
+    ...    请求地址：http://10.1.51.226:7200/crab/api/v1/datatypes
+    ...
+    ...    请求方式： get
+    ...
+    ...    获取成功后返回的响应码为200
+    ...    返回web页面Json格式数据：
+    ...    [{"name":"日期时间","type":"dateTime",
+    ...    "fields":[
+    ...    {"key":"name","text":"字段,"type":"text","nullAble":true,"multiple":false}
+    ...    …
+    ...    ]},
+    ...    {"name":"附件","type":"image",
+    ...    "fields":[
+    ...    {"key":"name","text":"字段,"type":"text","nullAble":true,"multiple":false},
+    ...    …
+    ...    ]},
+    ...    …
+    ...    ]
+    Create Session    api    http://10.1.51.226:7200
+    ${addr}    Get Request    api    crab/api/v1/datatypes
+    Should Be Equal As Strings    ${addr.status_code}    200
+    log    ${addr.content}
+    ${responsedata}    To Json    ${addr.content}
+    ${type}    Get From Dictionary    ${responsedata[0]}    type
+    ${responsedata}    To Json    ${addr.content}
+    ${fields}    Get From Dictionary    ${responsedata[0]}    fields
+    ${fieldstext}    Get From Dictionary    ${fields[0]}    text
+    Should Be Equal As Strings    ${fieldstext}    字段名
+    Delete All sessions

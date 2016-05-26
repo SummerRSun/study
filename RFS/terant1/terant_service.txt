@@ -1,0 +1,222 @@
+*** Settings ***
+Library           CustomLibrary
+Resource          keyword.txt
+Library           RequestsLibrary
+Library           YamlLibrary
+Library           Collections
+
+*** Test Cases ***
+租户-注册(失败)
+    [Documentation]    注册 api/v1/tenant/register POST
+    ...    2.1.1.3 请求参数
+    ...    {
+    ...    "tenantId"："租户id", \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "realname": "优云软件",
+    ...    "tenantName": "优云软件",
+    ...    "passwd": "passwd123",
+    ...    "email": "test@uyun.cn",
+    ...    "mobile": "123456789",
+    ...    "userId": "用户id",
+    ...    "industryId": "3454gfrgry45655", \ \ \ \ \ \ \ \ \ "inviteCode": "456876"
+    ...    }
+    ...    参数名称 类型 是否必需 说明
+    ...    tenantId String 否 租户id
+    ...    realname String 是 昵称
+    ...    tenantName String 否 租户名称
+    ...    passwd String 是 登录密码
+    ...    email String 是 电子邮件
+    ...    mobile String 是 手机号码
+    ...    address String 否 联系地址
+    ...    userId String 否 用户id
+    ...    industryId String 否 行业ID
+    ...    inviteCode String 是 邀请码
+    ...    2.1.1.4 返回结果
+    ...    {
+    ...    "errCode": null,
+    ...    "message": null,
+    ...    "data": {
+    ...    "tenantId": "5b3afe583d6f4df1ac103d50ca45cd4b",
+    ...    "realname": "wzg",
+    ...    "tenantName": "wzg1",
+    ...    "email": "wzgdxg@126.com",
+    ...    "mobile": "15158136733",
+    ...    "passwd": null,
+    ...    "industryId": null,
+    ...    "userId": "5b3afe583d6f4df1ac103d50ca45cd4b",
+    ...    "addTime": 1463541934000,
+    ...    "inviteCode": null
+    ...    }
+    ...    }
+    ...
+    ...    字段名称 类型 说明
+    ...    tenantId String 租户ID
+    ...    realname String 租户呢称
+    ...    tenantName String 租户名字
+    ...    email String 电子邮件
+    ...    mobile String 手机号码
+    ...    passwd String 登录密码
+    ...    industryId String 行业ID
+    ...    userId String 用户id
+    ...    addTime Date 注册时间
+    ...    inviteCode String 邀请码
+    ${data}    set variable    { "email":"libin@unyunsoft.cn","inviteCode":"TM1WDRWC4WUK1KTQ","realname":"wanxi3","passwd":"2222","mobile":"15158827547"}
+    ${reponse}    run interface test    ${url}api/v1/tenant/register    post    data=${data}    headers=${headers}
+    should be equal as strings    ${reponse.status_code}    400
+    ${content}    to json    ${reponse.content}
+    ${msg}    get from dictionary    ${content}    message
+
+租户-注册(成功)
+    [Documentation]    注册 api/v1/tenant/register POST
+    ...    2.1.1.3 请求参数
+    ...    {
+    ...    "tenantId"："租户id", \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "realname": "优云软件",
+    ...    "tenantName": "优云软件",
+    ...    "passwd": "passwd123",
+    ...    "email": "test@uyun.cn",
+    ...    "mobile": "123456789",
+    ...    "userId": "用户id",
+    ...    "industryId": "3454gfrgry45655", \ \ \ \ \ \ \ \ \ "inviteCode": "456876"
+    ...    }
+    ...    参数名称 类型 是否必需 说明
+    ...    tenantId String 否 租户id
+    ...    realname String 是 昵称
+    ...    tenantName String 否 租户名称
+    ...    passwd String 是 登录密码
+    ...    email String 是 电子邮件
+    ...    mobile String 是 手机号码
+    ...    address String 否 联系地址
+    ...    userId String 否 用户id
+    ...    industryId String 否 行业ID
+    ...    inviteCode String 是 邀请码
+    ...    2.1.1.4 返回结果
+    ...    {
+    ...    "errCode": null,
+    ...    "message": null,
+    ...    "data": {
+    ...    "tenantId": "5b3afe583d6f4df1ac103d50ca45cd4b",
+    ...    "realname": "wzg",
+    ...    "tenantName": "wzg1",
+    ...    "email": "wzgdxg@126.com",
+    ...    "mobile": "15158136733",
+    ...    "passwd": null,
+    ...    "industryId": null,
+    ...    "userId": "5b3afe583d6f4df1ac103d50ca45cd4b",
+    ...    "addTime": 1463541934000,
+    ...    "inviteCode": null
+    ...    }
+    ...    }
+    ...
+    ...    字段名称 类型 说明
+    ...    tenantId String 租户ID
+    ...    realname String 租户呢称
+    ...    tenantName String 租户名字
+    ...    email String 电子邮件
+    ...    mobile String 手机号码
+    ...    passwd String 登录密码
+    ...    industryId String 行业ID
+    ...    userId String 用户id
+    ...    addTime Date 注册时间
+    ...    inviteCode String 邀请码
+    #获取验证码
+    ${data}    set variable    {"num":1,"adduserid":"f3b3a3eebd024fea9f8e5a8903dffdc7"}
+    ${reponse}    run interface test    ${url}api/v1/inviCodeManage/getInvitationCode    get    data=${data}    headers=${headers}
+    should be equal as strings    ${reponse.status_code}    200
+    ${content}    to json    ${reponse.content}
+    ${invitecode}    get tree    ${content}    data
+    #注册
+    ${email}    random email
+    ${data2}    set variable    { "email":"${email}","inviteCode":"${invitecode[0]}","realname":"hhhh","passwd":"c8352b591f0896dde5230deec5e48693","mobile":"15158827547"}
+    ${reponse}    run interface test    ${url}api/v1/tenant/register    post    data=${data2}    headers=${headers}
+    ${content}    to json    ${reponse.content}
+    ${msg}    get from dictionary    ${content}    message
+    should be equal as strings    ${reponse.status_code}    200
+
+租户-登录(未开发)
+    log    未开发
+
+租户-编辑
+    [Documentation]    2.1.3 编辑
+    ...    2.1.3.1 接口URL
+    ...    https://$host:$port/tenant/api/v1/tenant/update
+    ...    2.1.3.2 请求方式
+    ...    POST
+    ...    2.1.3.3 请求参数
+    ...    {
+    ...    "tenantId": "34ee221440f64cf2aac95677aa3cabaf ",
+    ...    "tenantName": "youyun",
+    ...    "realname": "youyun"，
+    ...    "email": "11@qq.com ",
+    ...    "mobile": "15545245897",
+    ...    "industryId": "111"
+    ...    }
+    ...    参数名称 类型 是否必需 说明
+    ...    tenantId String 是 租户ID
+    ...    tenantName String 否 租户名称
+    ...    realname String 否 租户昵称
+    ...    email String 否 电子邮件
+    ...    mobile String 否 手机号码
+    ...    industryId String 否 行业ID
+    ...    说明：除tenantId外，其他字段至少选一。
+    ...    2.1.3.4 返回结果
+    ...    {
+    ...    "errCode": null,
+    ...    "message": null,
+    ...    "data": {
+    ...    "tenantId": "34ee221440f64cf2aac95677aa3cabaf",
+    ...    "realname": "youyun",
+    ...    "tenantName": "youyun",
+    ...    "email": "11@qq.com",
+    ...    "mobile": "15545245897",
+    ...    "passwd": null,
+    ...    "industryId": "111",
+    ...    "userId": "34ee221440f64cf2aac95677aa3cabaf",
+    ...    "addTime": 1463553121000,
+    ...    "inviteCode": null
+    ...    }
+    ...    }
+    ${data}    set variable    {"tenantId": "${用户id}","tenantName": "libin2","realname": "lichen","industryId": "111",'email':'libin@uyunsoft.cn','mobile':'15158827547'}
+    ${reponse}    run interface test tenant    ${用户名和密码}    ${url}api/v1/tenant/update    post    headers=${headers}    data=${data}
+    ${content}    to json    ${reponse.content}
+    ${msg}    get tree    ${content}    message
+    ${realname}    get tree    ${content}    data.realname
+    should be equal as strings    ${reponse.status_code}    200
+    should be equal as strings    ${realname}    lichen
+
+租户-修改密码(未开发)
+    log    未开发
+
+租户-查看详情
+    [Documentation]    2.1.5 查看详情
+    ...    2.1.5.1 接口URL
+    ...    https://$host:$port/tenant/api/v1/tenant/view
+    ...    2.1.5.2 请求方式
+    ...    GET
+    ...    2.1.5.3 请求参数
+    ...    参数名称 类型 是否必需 说明
+    ...    tenantId String 是 租户ID
+    ...
+    ...    2.1.5.4 返回结果
+    ...    {
+    ...    "errCode": null,
+    ...    "message": null,
+    ...    "data": {
+    ...    "tenantId": "34ee221440f64cf2aac95677aa3cabaf ",
+    ...    "tenantName": "youyun",
+    ...    "realname": "youyun"
+    ...    "email": "11@qq.com ",
+    ...    "mobile": "15545245897",
+    ...    "passwd": null,
+    ...    "industryId": "111",
+    ...    "userId": "34ee221440f64cf2aac95677aa3cabaf",
+    ...    "addTime": 1463553121000,
+    ...    "inviteCode": null
+    ...    }
+    ...    }
+    ${data}    set variable    {'userId':'f74991c9a510424dbc012097c49c5c2e'}
+    ${reponse}    run interface test tenant    ${用户名和密码}    ${url}api/v1/tenant/view    get    headers=${headers}    data=${data}
+    ${content}    to json    ${reponse.content}
+    ${msg}    get tree    ${content}    message
+    should be equal as strings    ${reponse.status_code}    200
+    ${username}    get tree    ${content}    data.username
+    should be equal as strings    ${username}    hhhh
+    ${mobile}    get tree    ${content}    data.mobile
+    should be equal as strings    ${mobile}    15158827547

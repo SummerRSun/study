@@ -1,0 +1,17 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           YamlLibrary
+Library           Collections
+
+*** Variables ***
+${cmdb_api}       http://cmdb.uyuntest.cn
+
+*** Keywords ***
+LoginTenant
+    ${heades1}    create dictionary    Content-Type=application/json
+    ${data1}    create dictionary    email=tangjt@uyunsoft.cn    passwd=e10adc3949ba59abbe56e057f20f883e
+    Create Session    api    http://tenant.uyuntest.cn
+    ${addr}    post request    api    tenant/api/v1/user/login    headers=${heades1}    data=${data1}
+    should be equal as strings    ${addr.status_code}    200
+    ${token}    get tree    ${addr.content}    data.token
+    [Return]    ${token}
