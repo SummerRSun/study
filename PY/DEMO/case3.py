@@ -6,16 +6,14 @@
 请将其按照以下格式输出， 格式:XXXX-XX-XX XX:XX:XX。如上例应该输出： 2013-09-30 16:45:02。
 '''
 import time
-time1 = {'year':'2013','month':'9','day':'22','hour':'16','minute':'45','second':'2'}
+time = {'year':'2013','month':'9','day':'22','hour':'16','minute':'45','second':'2'}
 
-print time1['year']
-
-year = time1.get('year')
-month = time1.get('month')
-day = time1.get('day')
-hour = time1.get('hour')
-minute = time1.get('minute')
-second = time1.get('second')
+year = time['year']
+month = time['month']
+day = time['day']
+hour = time['hour']
+minute = time['minute']
+second = time['second']
 
 list = []
 list.append(year.zfill(4))
@@ -24,13 +22,9 @@ list.append(day.zfill(2))
 list.append(hour.zfill(2))
 list.append(minute.zfill(2))
 list.append(second.zfill(2))
-print list
 
-str = '-'.join(list[:3]),':'.join(list[3:])
-print str
+print '-'.join(list[:3]),':'.join(list[3:])
 
-# ['2013', '09', '22', '16', '45', '02']
-# 2013-09-22 16:45:02
 
 
 
