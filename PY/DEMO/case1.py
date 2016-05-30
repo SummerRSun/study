@@ -5,15 +5,13 @@
       b.每个邀请码长度为10
 '''
 
-import random,string
+import random
 
 def generate_code():
     code_list = []
     # 0-9 数字
-    # for i in range(10):
-    # # 0-9数字
-    #      code_list.append(str(i))
-
+    for i in range(10):
+        code_list.append(str(i))
     # A-Z
     for j in range(65,91):
         code_list.append(chr(j))
@@ -22,15 +20,13 @@ def generate_code():
         code_list.append(chr(k))
 
     slice = random.sample(code_list,10)
-    # return slice
-    print slice
-    str = ''.join(slice)
-    return str
+    str1 = ''.join(slice)
+    return str1
 
 def generate(num):
     for i in range(num):
         code = generate_code()
         print code
 
-# if __name__ == '__main__':
-generate(20)
+if __name__ == '__main__':
+    generate(20)

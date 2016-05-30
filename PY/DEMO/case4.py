@@ -13,7 +13,7 @@ def addNum(filePath):
      ttFont = ImageFont.truetype("simsun.ttc", fontSize)
      draw.text((fontSize, fontSize), "88","black", font=ttFont)
      del draw
-     img.save('F:/PY/result.png')
+     img.save('E:/PycharmProjects/result.png')
      img.show()
 
-print addNum("F:/PY/p.png")
+print addNum("E:/PycharmProjects/p.png")
