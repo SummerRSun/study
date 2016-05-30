@@ -10,6 +10,7 @@ import random
 def generate_code():
     code_list = []
     # 0-9 数字
+    
     for i in range(10):
         code_list.append(str(i))
     # A-Z
