@@ -1,6 +1,0 @@
-*** Keywords ***
-add
-    [Arguments]    ${a}    ${b}
-    log many    ${a}    ${b}
-    ${result}    set variable    5
-    [Return]    ${result}

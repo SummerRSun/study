@@ -1,2 +1,0 @@
-*** Variables ***
-${cmdb_api}       http://10.1.51.226:7200

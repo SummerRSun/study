@@ -1,2 +1,0 @@
-*** Variables ***
-${str}            11
